@@ -4,7 +4,10 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.alex.converter.DozerConverter;
 import br.com.alex.data.model.Person;
@@ -35,6 +38,15 @@ public class PersonService {
 
 		return entities;
 	}
+	
+	public Page<PersonVO> findAllPageable(Pageable pageable) {
+		var page = repository.findAll(pageable);
+		return page.map(this::convertToPersonVO);		
+	}
+	
+	public PersonVO convertToPersonVO(Person entity) {
+		return DozerConverter.parseObject(entity, PersonVO.class);
+	}
 
 	public PersonVO findById(Long id) {
 		Person person = repository.findById(id)
@@ -44,6 +56,7 @@ public class PersonService {
 		return vo;
 	}
 
+	@Transactional
 	public PersonVO disablePerson(Long id) {
 
 		repository.disablePerson(id);
