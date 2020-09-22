@@ -19,6 +19,8 @@ public class BookVO extends ResourceSupport implements Serializable {
 	private Date launch_date;
 	private Double price;
 	private String title;
+	@JsonProperty("habilitado")
+	private Boolean enabled;
 
 	/**
 	 * @return the key
@@ -90,11 +92,26 @@ public class BookVO extends ResourceSupport implements Serializable {
 		this.title = title;
 	}
 
+	/**
+	 * @return the enabled
+	 */
+	public Boolean getEnabled() {
+		return enabled;
+	}
+
+	/**
+	 * @param enabled the enabled to set
+	 */
+	public void setEnabled(Boolean enabled) {
+		this.enabled = enabled;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		int result = 1;
+		int result = super.hashCode();
 		result = prime * result + ((author == null) ? 0 : author.hashCode());
+		result = prime * result + ((enabled == null) ? 0 : enabled.hashCode());
 		result = prime * result + ((key == null) ? 0 : key.hashCode());
 		result = prime * result + ((launch_date == null) ? 0 : launch_date.hashCode());
 		result = prime * result + ((price == null) ? 0 : price.hashCode());
@@ -106,7 +123,7 @@ public class BookVO extends ResourceSupport implements Serializable {
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (obj == null)
+		if (!super.equals(obj))
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
@@ -115,6 +132,11 @@ public class BookVO extends ResourceSupport implements Serializable {
 			if (other.author != null)
 				return false;
 		} else if (!author.equals(other.author))
+			return false;
+		if (enabled == null) {
+			if (other.enabled != null)
+				return false;
+		} else if (!enabled.equals(other.enabled))
 			return false;
 		if (key == null) {
 			if (other.key != null)

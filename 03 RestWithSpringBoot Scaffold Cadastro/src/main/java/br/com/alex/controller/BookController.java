@@ -6,6 +6,14 @@ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.PagedResources;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.alex.data.vo.v1.BookVO;
@@ -28,13 +37,40 @@ public class BookController {
 
 	@Autowired
 	private BookService services;
+	
+	@Autowired
+	private PagedResourcesAssembler<BookVO> assembler;
 
 	@ApiOperation(value = "Find book record by id")
 	@GetMapping(value = "/{id}", produces = { "application/json", "application/xml", "application/x-yaml" })
-	public BookVO findById(@PathVariable("id") Long id) {
+	public BookVO findById(@PathVariable("author") Long id) {
 		BookVO vo = this.services.findById(id);
 		vo.add(linkTo(methodOn(BookController.class).findById(id)).withSelfRel());
 		return vo;
+	}
+	
+	@ApiOperation(value = "Find book record by name")
+	@GetMapping(value = "/findBookByName/{author}", produces = { "application/json", "application/xml", "application/x-yaml" })
+	public ResponseEntity<?> findBookByName(@PathVariable(value="author") String author,
+								 @RequestParam(value = "page", defaultValue = "0") int page,
+								 @RequestParam(value = "limit", defaultValue = "5") int limit,
+								 @RequestParam(value = "direction", defaultValue = "asc") String direction) {
+		
+		var sortDirection = "desc".equalsIgnoreCase(direction) ? Direction.DESC : Direction.ASC;
+		
+		Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, "firstName"));
+
+		Page<BookVO> books = this.services.findBookByName(author, pageable);
+		
+		books.stream()
+				.forEach(p -> p.add(linkTo(
+									methodOn(PersonController.class).
+									findPersonByName(p.getAuthor(),page,limit,direction)).
+									withSelfRel()));
+		
+		PagedResources<?> resource = assembler.toResource(books);
+		
+		return new ResponseEntity<>(resource, HttpStatus.OK);
 	}
 
 	@ApiOperation(value = "Find book record")
@@ -42,7 +78,10 @@ public class BookController {
 	public List<BookVO> findAll() {
 		List<BookVO> books = this.services.findAll();
 		books.stream()
-				.forEach(p -> p.add(linkTo(methodOn(BookController.class).findById(p.getKey())).withSelfRel()));
+				.forEach(p -> p.add(linkTo(
+										methodOn(BookController.class).
+										findAll()).
+										withSelfRel()));
 		return books;
 	}
 
@@ -51,7 +90,7 @@ public class BookController {
 			"application/json", "application/xml", "application/x-yaml" })
 	public BookVO create(@RequestBody BookVO bookVO) {
 		BookVO vo = this.services.createBook(bookVO);
-		vo.add(linkTo(methodOn(BookController.class).findById(vo.getKey())).withSelfRel());
+		vo.add(linkTo(methodOn(BookController.class).create(vo)).withSelfRel());
 		return vo;
 	}
 
@@ -60,7 +99,7 @@ public class BookController {
 			"application/json", "application/xml", "application/x-yaml" })
 	public BookVO update(@RequestBody BookVO bookVO) {
 		BookVO vo = this.services.update(bookVO);
-		vo.add(linkTo(methodOn(BookController.class).findById(vo.getKey())).withSelfRel());
+		vo.add(linkTo(methodOn(BookController.class).update(vo)).withSelfRel());
 		return vo;
 	}
 

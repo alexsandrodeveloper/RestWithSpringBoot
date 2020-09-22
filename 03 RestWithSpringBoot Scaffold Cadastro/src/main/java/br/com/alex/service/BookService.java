@@ -3,6 +3,8 @@ package br.com.alex.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import br.com.alex.converter.DozerConverter;
@@ -63,6 +65,18 @@ public class BookService {
 		Book entity = repository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("No record found for this ID"));
 		this.repository.delete(entity);
-		;
+	}
+	
+	public void disableBook(Long id) {
+		
+	}
+	
+	public Page<BookVO> findBookByName(String author, Pageable pageable){
+		Page<Book> books = this.repository.findBookByName(author, pageable);
+		return books.map(this::convertToBookVO);
+	}
+	
+	public BookVO convertToBookVO(Book entity) {
+		return DozerConverter.parseObject(entity, BookVO.class);
 	}
 }

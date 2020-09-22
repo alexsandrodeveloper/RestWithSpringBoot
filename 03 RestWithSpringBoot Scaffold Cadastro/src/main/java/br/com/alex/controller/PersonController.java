@@ -38,6 +38,9 @@ public class PersonController {
 
 	@Autowired
 	private PersonService services;
+	
+	@Autowired
+	private PagedResourcesAssembler<PersonVO> assembler;
 
 	// @CrossOrigin(origins = "http://localhost:8080")
 	@ApiOperation(value = "Find people record by id")
@@ -61,13 +64,11 @@ public class PersonController {
 	// recurso
 	// @CrossOrigin(origins = {"http://localhost:8080" ,
 	// "http://alexsandro.com.br"})
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@ApiOperation(value = "Find all people records with pageable")
 	@GetMapping(produces = { "application/json", "application/xml", "application/x-yaml" })
-	public ResponseEntity<PagedResources<PersonVO>> findAllPageable(@RequestParam(value = "page", defaultValue = "0") int page,
+	public ResponseEntity<?> findAllPageable(@RequestParam(value = "page", defaultValue = "0") int page,
 										  			@RequestParam(value = "limit", defaultValue = "12") int limit,
-										  			@RequestParam(value = "direction", defaultValue = "asc") String direction,
-										  			PagedResourcesAssembler assembler) {
+										  			@RequestParam(value = "direction", defaultValue = "asc") String direction) {
 
 		var sortDirection = "desc".equalsIgnoreCase(direction) ? Direction.DESC : Direction.ASC;
 		
@@ -77,22 +78,22 @@ public class PersonController {
 		
 		persons.stream().forEach(p -> p.add(linkTo(
 								                   methodOn(PersonController.class).
-								                   findAllPageable(page,limit,direction,assembler)).
+								                   findAllPageable(page,limit,direction)).
 												   withSelfRel()));
 		
-		return new ResponseEntity<>(assembler.toResource(persons), HttpStatus.OK);
+		PagedResources<?> resource = assembler.toResource(persons);
+
+		return new ResponseEntity<>(resource, HttpStatus.OK);
 	}
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@ApiOperation(value = "Find all people records with pageable")
 	@GetMapping(value = "/findPersonByName/{firstName}",
 				produces = { "application/json", "application/xml", "application/x-yaml" })
-	public ResponseEntity<PagedResources<PersonVO>> findPersonByName(
+	public ResponseEntity<?> findPersonByName(
 									@PathVariable(value="firstName") String firstName,
 									@RequestParam(value = "page", defaultValue = "0") int page,
 									@RequestParam(value = "limit", defaultValue = "12") int limit,
-									@RequestParam(value = "direction", defaultValue = "asc") String direction,
-										  		  PagedResourcesAssembler assembler) {
+									@RequestParam(value = "direction", defaultValue = "asc") String direction) {
 
 		var sortDirection = "desc".equalsIgnoreCase(direction) ? Direction.DESC : Direction.ASC;
 		
@@ -103,10 +104,12 @@ public class PersonController {
 		persons.stream()
 				.forEach(p -> p.add(linkTo(
 									methodOn(PersonController.class).
-									findPersonByName(p.getFirstName(),page,limit,direction,assembler)).
+									findPersonByName(p.getFirstName(),page,limit,direction)).
 									withSelfRel()));
 		
-		return new ResponseEntity<>(assembler.toResource(persons), HttpStatus.OK);
+		PagedResources<?> resource = assembler.toResource(persons);
+		
+		return new ResponseEntity<>(resource, HttpStatus.OK);
 	}
 
 	@ApiOperation(value = "Create people")
